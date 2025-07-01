@@ -5,8 +5,8 @@ import { saveToken } from "../utils/storage";
 import { useDispatch, useSelector } from "react-redux";
 import { setUser } from "../store/authSlice";
 import { toast } from "react-toastify";
-import { matchidEvmLogin } from '../utils/matchidLogin';
-import { Hooks } from "@matchain/matchid-sdk-react";
+import { matchidEvmLogin } from "../utils/matchidLogin";
+// import { Hooks } from "@matchain/matchid-sdk-react";
 
 const LoginPage = () => {
   const dispatch = useDispatch();
@@ -17,8 +17,8 @@ const LoginPage = () => {
   const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const token = useSelector((state) => state.auth.matchidToken);
   const navigate = useNavigate();
-  const { useUserInfo } = Hooks;
-  const { getAuthInfo } = useUserInfo();
+  // const { useUserInfo } = Hooks;
+  // const { getAuthInfo } = useUserInfo();
 
   useEffect(() => {
     if (isAuthenticated && token) {
@@ -78,7 +78,7 @@ const LoginPage = () => {
       saveToken(token);
       let matchIDToken, matchIDAddress, matchIDDid;
 
-      // 🔐 If this is a new user without MatchID, do the EVM login from frontend
+      // 🔐 If this is a new user without MatchID, create a MatchID
       if (
         needsMatchIdSetup &&
         extraEvmAddress &&
@@ -86,7 +86,8 @@ const LoginPage = () => {
         userId
       ) {
         try {
-          const { matchidAddress, matchidToken, matchidDid } = await matchidEvmLogin(extraEvmAddress, extraEvmPrivateKey);
+          const { matchidAddress, matchidToken, matchidDid } =
+            await matchidEvmLogin(extraEvmAddress, extraEvmPrivateKey);
           matchIDToken = matchidToken;
           matchIDAddress = matchidAddress;
           matchIDDid = matchidDid;
@@ -110,6 +111,33 @@ const LoginPage = () => {
           toast.error(`Failed to complete MatchID login, ${e}`);
           return;
         }
+      } /** else just MatchID login **/ else {
+        try {
+          const { matchidAddress, matchidToken, matchidDid } =
+            await matchidEvmLogin(extraEvmAddress, extraEvmPrivateKey);
+          matchIDToken = matchidToken;
+          matchIDAddress = matchidAddress;
+          matchIDDid = matchidDid;
+          // const authInfo = await getAuthInfo('evm');
+          // console.log('✅ Auth Info:', authInfo);
+          // console.log('📦 did:', authInfo?.did);
+          // console.log('🔑 auth_key:', authInfo?.auth_key);
+
+          // Send matchid info back to backend
+          await axios.post("http://localhost:4000/api/signin-pay-matchid", {
+            userId,
+            // matchIdAddress: matchIdAddress,
+            matchidToken: matchidToken,
+            matchidDid: matchidDid,
+            // matchidAuthKey: authInfo.auth_key,
+          });
+
+          toast.success("MatchID login complete 🎉");
+        } catch (e) {
+          console.error("MatchID login failed", e);
+          toast.error(`Failed to complete MatchID login, ${e}`);
+          return;
+        }
       }
 
       dispatch(
@@ -121,9 +149,9 @@ const LoginPage = () => {
           matchidToken: matchIDToken || "",
           matchidAuthKey: "", // optional: fill from getAuthInfo if needed
           extraEvmAddress: extraEvmAddress || "",
-          isAuthenticated: true
-        })
-      );      
+          isAuthenticated: true,
+        }),
+      );
       toast.success("Login successful 🎉");
       navigate("/");
     } catch (err) {

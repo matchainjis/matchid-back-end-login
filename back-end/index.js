@@ -8,6 +8,7 @@ import bodyParser from 'body-parser';
 import authRoutes from './routes/auth.js';
 import signTransactionRoutes from './routes/signTransaction.js';
 import updateMatchidRoutes from './routes/updateMatchid.js';
+import signinPayMatchidRoutes from './routes/signinPayMatchid.js';
 
 dotenv.config();
 const app = express();
@@ -17,6 +18,7 @@ app.use(bodyParser.json());
 app.use('/api', authRoutes);
 app.use('/api', signTransactionRoutes);
 app.use('/api', updateMatchidRoutes);
+app.use('/api', signinPayMatchidRoutes);
 
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {

@@ -35,7 +35,7 @@ const authSlice = createSlice({
             state.matchidToken = matchidToken;
             state.matchidAuthKey = matchidAuthKey;
             state.extraEvmAddress = extraEvmAddress;
-            state.isAuthenticated = true;
+            state.isAuthenticated = isAuthenticated;
             saveToken(matchidToken);
         },
         logout(state) {
